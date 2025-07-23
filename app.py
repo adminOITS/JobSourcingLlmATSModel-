@@ -12,7 +12,7 @@ ssm = boto3.client("ssm")
 def get_parameter(name, with_decryption=False):
     return ssm.get_parameter(Name=name, WithDecryption=with_decryption)["Parameter"]["Value"]
 
-OPEN_AI_API_KEY = get_parameter(name, with_decryption=True)
+OPEN_AI_API_KEY = get_parameter("/jobsourcing/env/dev/lmm/openai/key", with_decryption=True)
 OPEN_AI_BASE_URL = "https://api.openai.com/v1"
 client = OpenAI(api_key=OPEN_AI_API_KEY , base_url=OPEN_AI_BASE_URL)
 CLIENT_SECRET_KEYCLOAK=get_parameter("/llama/client_secret_keycloak", with_decryption=True)
