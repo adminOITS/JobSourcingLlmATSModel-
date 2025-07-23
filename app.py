@@ -176,9 +176,9 @@ def lambda_handler(event, context):
             stream=False
         )
 
+        logger.info(f"OpenAI Response: {response.choices[0].message.content}")
         return {
-            "statusCode": 200,
-            "body": response.choices[0].message.content
+            "statusCode": 200
         }
 
     except Exception as e:
