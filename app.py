@@ -206,7 +206,7 @@ def lambda_handler(event, context):
                 "missing": ["<what title was expected but missing>"]
             }},
             "final_score": <0-100>,
-            "reasoning": "<your reasoning based on all elements>"
+            "reasoning": "<your reasoning based on all elements>",
             "red_flags": {
                 "<skill_or_requirement>": "<specific concern or absence reason>"
             },
@@ -251,6 +251,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
+        logger.error(f"Error while processing: {e}")
         return {
             "statusCode": 500,
             "body": f"Error: {str(e)}"
