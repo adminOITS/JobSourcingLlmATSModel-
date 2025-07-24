@@ -229,7 +229,7 @@ def lambda_handler(event, context):
             stream=False
         )
 
-                logger.info(f"Before OpenAI Response: {response.choices[0].message.content}")
+        logger.info(f"Before OpenAI Response: {response.choices[0].message.content}")
 
         openai_result=None
         # Convert string to dict
