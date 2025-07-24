@@ -1,13 +1,19 @@
 from openai import OpenAI
 import boto3
+from boto3.dynamodb.conditions import Key
+from datetime import datetime
 import json
 import requests
 import logging
+from decimal import Decimal, InvalidOperation
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 ssm = boto3.client("ssm")
+
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("MatchingResults")
 
 def get_parameter(name, with_decryption=False):
     return ssm.get_parameter(Name=name, WithDecryption=with_decryption)["Parameter"]["Value"]
@@ -58,6 +64,49 @@ EDUCATION_WEIGHT = 0.10
 LANGUAGE_WEIGHT = 0.10
 LOCATION_WEIGHT = 0.05
 TITLE_WEIGHT=0.05
+
+
+
+
+def update_openai_result_in_dynamodb(
+    offer_id, profile_id,
+    candidate_id,
+    openai_result: dict
+):
+    now = datetime.utcnow().isoformat()
+
+    final_score_raw = openai_result.get("final_score", 0)
+    final_score = Decimal(0)
+    try:
+        final_score = Decimal(str(final_score_raw))
+    except (InvalidOperation, ValueError, TypeError):
+        final_score = Decimal(0)
+
+    response = table.update_item(
+        Key={
+            'offerId': offer_id,
+            'profileId': profile_id
+        },
+        UpdateExpression="""
+            SET 
+                candidateId = :cid,
+                openAiMatchDetails = :openai,
+                updatedAt = :upd,
+                totalMatchScoreAdvanced = :ts,
+                createdAt = if_not_exists(createdAt, :cre)
+        """,
+        ExpressionAttributeValues={
+            ':cid': candidate_id,
+            ':ts' : final_score ,
+            ':openai': openai_result,
+            ':upd': now,
+            ':cre': now
+        },
+        ReturnValues="UPDATED_NEW"
+    )
+
+    return response
+
 
 def lambda_handler(event, context):
     try:
@@ -158,7 +207,9 @@ def lambda_handler(event, context):
             }},
             "final_score": <0-100>,
             "reasoning": "<your reasoning based on all elements>"
-            "red_flags": ["<list of critical issues or concerns>"],
+            "red_flags": {
+                "<skill_or_requirement>": "<specific concern or absence reason>"
+            },
             "estimated_seniority": "<Junior | Mid-level | Senior | Lead>",
             "growth_potential": "<comment on the potential for upskilling or growth>",
             "recommended_training": ["<list of suggested skills, tools, or certifications to improve match>"]
@@ -176,7 +227,25 @@ def lambda_handler(event, context):
             stream=False
         )
 
-        logger.info(f"OpenAI Response: {response.choices[0].message.content}")
+        openai_result=None
+        # Convert string to dict
+        try:
+            openai_result = json.loads(response.choices[0].message.content)
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse OpenAI response as JSON", exc_info=e)
+            raise
+
+        logger.info(f"OpenAI Response: {openai_result}")
+
+
+        # Save to DynamoDB
+        response = update_openai_result_in_dynamodb(
+            offer_id=offer_id,
+            profile_id=profile_id,
+            candidate_id=candidate_id,
+            openai_result=openai_result
+        )
+
         return {
             "statusCode": 200
         }
