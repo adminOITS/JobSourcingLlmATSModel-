@@ -81,6 +81,8 @@ def update_openai_result_in_dynamodb(
         final_score = Decimal(str(final_score_raw))
     except (InvalidOperation, ValueError, TypeError):
         final_score = Decimal(0)
+    
+    openai_result.pop("final_score", None)  # Safely remove if it exists
 
     response = table.update_item(
         Key={
@@ -208,8 +210,8 @@ def lambda_handler(event, context):
             "final_score": <0-100>,
             "reasoning": "<your reasoning based on all elements>",
             "red_flags": {{
-                "<Skill 1>": "<reason why it's a concern or not matched>",
-                "<Skill 2>": "<another concern or issue>",
+                "<Skill>": "<reason why it's a concern or not matched>",
+                "<Skill>": "<another concern or issue>",
                 ...
             }},
             "estimated_seniority": "<Junior | Mid-level | Senior | Lead>",
