@@ -207,9 +207,11 @@ def lambda_handler(event, context):
             }},
             "final_score": <0-100>,
             "reasoning": "<your reasoning based on all elements>",
-            "red_flags": {
-                "<skill_or_requirement>": "<specific concern or absence reason>"
-            },
+            "red_flags": {{
+                "<Skill 1>": "<reason why it's a concern or not matched>",
+                "<Skill 2>": "<another concern or issue>",
+                ...
+            }},
             "estimated_seniority": "<Junior | Mid-level | Senior | Lead>",
             "growth_potential": "<comment on the potential for upskilling or growth>",
             "recommended_training": ["<list of suggested skills, tools, or certifications to improve match>"]
@@ -226,6 +228,8 @@ def lambda_handler(event, context):
             ],
             stream=False
         )
+
+                logger.info(f"Before OpenAI Response: {response.choices[0].message.content}")
 
         openai_result=None
         # Convert string to dict
