@@ -78,7 +78,7 @@ def update_openai_result_in_dynamodb(
     final_score_raw = openai_result.get("final_score", 0)
     final_score = Decimal(0)
     try:
-        final_score = Decimal(str(final_score_raw))
+        final_score = Decimal(str(final_score_raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     except (InvalidOperation, ValueError, TypeError):
         final_score = Decimal(0)
     
