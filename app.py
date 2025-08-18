@@ -137,11 +137,11 @@ def lambda_handler(event, context):
             "Content-Type": "application/json"
         }
         offer_res = fetch_offer_dto(gateway_url, headers ,offer_id)
-        logger.info(f"offerFetch: {offer_res}")
         offer_json= offer_res.json()
+        logger.info(f"offerFetch: {offer_json}")
         profile_res = fetch_profile_dto(gateway_url,headers ,candidate_id ,profile_id)
-        logger.info(f"profileFetch: {profile_res}")
         profile_json=profile_res.json()
+        logger.info(f"profileFetch: {profile_json}")
 
         if not offer_json or not profile_json:
             logger.error("Missing 'offerDto' or 'profileDto' in the payload")
@@ -223,7 +223,7 @@ def lambda_handler(event, context):
             """
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "You are an expert recruitment assistant."},
                 {"role": "user", "content": prompt}
